@@ -176,7 +176,7 @@ func writeTotals(pdf *gopdf.GoPdf, subtotal float64, tax float64, discount float
 	if discount > 0 {
 		writeTotal(pdf, discountLabel, discount)
 	}
-	writeTotal(pdf, totalLabel, subtotal+tax-discount)
+	writeTotal(pdf, totalLabel+fmt.Sprintf(" (%s)", file.Currency), subtotal+tax-discount)
 }
 
 func writeTotal(pdf *gopdf.GoPdf, label string, total float64) {
