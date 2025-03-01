@@ -106,8 +106,18 @@ func writeBillTo(pdf *gopdf.GoPdf, to string) {
 }
 
 func writeHeaderRow(pdf *gopdf.GoPdf) {
-	_ = pdf.SetFont("Inter", "", 9)
-	pdf.SetTextColor(55, 55, 55)
+	pdf.SetLineWidth(0.5)
+	pdf.SetStrokeColor(0, 0, 0)
+
+	// Top border line
+	y := pdf.GetY()
+	pdf.Line(40, y, 555, y)
+	pdf.Br(18)
+
+	// Header text
+	_ = pdf.SetFont("Inter-Bold", "", 10)
+	pdf.SetTextColor(0, 0, 0)
+	pdf.SetX(40)
 	_ = pdf.Cell(nil, "ITEM")
 	pdf.SetX(quantityColumnOffset)
 	_ = pdf.Cell(nil, "QTY")
@@ -115,7 +125,65 @@ func writeHeaderRow(pdf *gopdf.GoPdf) {
 	_ = pdf.Cell(nil, "RATE")
 	pdf.SetX(amountColumnOffset)
 	_ = pdf.Cell(nil, "AMOUNT")
+	pdf.Br(18)
+
+	// Bottom border line
+	y = pdf.GetY()
+	pdf.Line(40, y, 555, y)
+	pdf.Br(12)
+}
+
+func writeRow(pdf *gopdf.GoPdf, item string, quantity int, rate float64) {
+	_ = pdf.SetFont("Inter", "", 11)
+	pdf.SetTextColor(0, 0, 0)
+
+	total := float64(quantity) * rate
+	amount := strconv.FormatFloat(total, 'f', 2, 64)
+
+	// Draw item text (left-aligned)
+	_ = pdf.Cell(nil, item)
+
+	// Draw quantity (right-aligned in its column)
+	pdf.SetX(quantityColumnOffset)
+	_ = pdf.Cell(nil, strconv.Itoa(quantity))
+
+	// Draw rate (right-aligned)
+	pdf.SetX(rateColumnOffset)
+	_ = pdf.Cell(nil, currencySymbols[file.Currency]+strconv.FormatFloat(rate, 'f', 2, 64))
+
+	// Draw amount (right-aligned)
+	pdf.SetX(amountColumnOffset)
+	_ = pdf.Cell(nil, currencySymbols[file.Currency]+amount)
+
+	// Move to next line
 	pdf.Br(24)
+
+	// Draw horizontal line between rows
+	drawHorizontalLine(pdf, pdf.GetY())
+}
+
+func drawHorizontalLine(pdf *gopdf.GoPdf, y float64) {
+	pdf.SetLineWidth(0.25)
+	pdf.SetStrokeColor(200, 200, 200)
+	pdf.Line(40, y, 555, y) // Full width from left margin to right margin
+}
+
+func drawRowLine(pdf *gopdf.GoPdf, y, nextRowY float64) {
+	pdf.SetLineWidth(0.25)
+	pdf.SetStrokeColor(200, 200, 200)
+
+	// Adjust y if needed (fine-tune to control spacing)
+	pdf.Line(40, y, 555, y)
+}
+
+func drawColumnSeparators(pdf *gopdf.GoPdf, startY, endY float64) {
+	pdf.SetLineWidth(0.25)
+	pdf.SetStrokeColor(200, 200, 200)
+
+	columns := []float64{40, quantityColumnOffset, rateColumnOffset, amountColumnOffset, 555}
+	for _, x := range columns {
+		pdf.Line(x, startY, x, endY)
+	}
 }
 
 func writeNotes(pdf *gopdf.GoPdf, notes string) {
@@ -147,23 +215,6 @@ func writeFooter(pdf *gopdf.GoPdf, id string) {
 	pdf.SetStrokeColor(225, 225, 225)
 	pdf.Line(pdf.GetX()+10, pdf.GetY()+6, 550, pdf.GetY()+6)
 	pdf.Br(48)
-}
-
-func writeRow(pdf *gopdf.GoPdf, item string, quantity int, rate float64) {
-	_ = pdf.SetFont("Inter", "", 11)
-	pdf.SetTextColor(0, 0, 0)
-
-	total := float64(quantity) * rate
-	amount := strconv.FormatFloat(total, 'f', 2, 64)
-
-	_ = pdf.Cell(nil, item)
-	pdf.SetX(quantityColumnOffset)
-	_ = pdf.Cell(nil, strconv.Itoa(quantity))
-	pdf.SetX(rateColumnOffset)
-	_ = pdf.Cell(nil, currencySymbols[file.Currency]+strconv.FormatFloat(rate, 'f', 2, 64))
-	pdf.SetX(amountColumnOffset)
-	_ = pdf.Cell(nil, currencySymbols[file.Currency]+amount)
-	pdf.Br(24)
 }
 
 func writeTotals(pdf *gopdf.GoPdf, subtotal float64, tax float64, discount float64) {
